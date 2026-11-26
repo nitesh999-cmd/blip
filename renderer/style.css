@@ -1,0 +1,160 @@
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+  user-select: none;
+  font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+}
+
+/* ---------- Blip ---------- */
+.pet {
+  position: absolute;
+  left: 0;
+  bottom: 4px;
+  width: 84px;
+  height: 124px;
+  cursor: pointer;
+  will-change: transform;
+}
+
+.shadow {
+  position: absolute;
+  left: 19px;
+  bottom: 0;
+  width: 46px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.22);
+  filter: blur(1px);
+}
+
+.body-wrap {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 100%;
+}
+.body-wrap svg { display: block; overflow: visible; }
+
+.pet.walking .body-wrap { animation: waddle 0.52s ease-in-out infinite; }
+.pet.dragging { cursor: grabbing; }
+.pet.dragging .body-wrap { transform: translateY(-3px) rotate(-6deg); transition: transform 0.12s ease-out; }
+.pet.dragging .shadow { opacity: 0.4; }
+.body-wrap.jump { animation: jump 0.72s cubic-bezier(0.3, 0.7, 0.4, 1) both; }
+
+@keyframes waddle {
+  0%, 100% { transform: translateY(0) scale(1.03, 0.97); }
+  50% { transform: translateY(-4px) scale(0.97, 1.03); }
+}
+
+@keyframes jump {
+  0% { transform: none; }
+  15% { transform: scale(1.18, 0.8); }
+  45% { transform: translateY(-60px) scale(0.9, 1.12); }
+  72% { transform: translateY(0) scale(1.14, 0.86); }
+  86% { transform: scale(0.96, 1.04); }
+  100% { transform: none; }
+}
+
+/* The plant sways gently, and more when Sprout walks. */
+.plant {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: breeze 3.6s ease-in-out infinite;
+}
+.pet.walking .plant { animation: sway 1.04s ease-in-out infinite; }
+
+@keyframes breeze {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(2deg); }
+}
+
+@keyframes sway {
+  0%, 100% { transform: rotate(-6deg); }
+  50% { transform: rotate(6deg); }
+}
+
+.lid, .pupil-scale {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.lid { transition: transform 0.07s ease-in; }
+.pupil-scale { transition: transform 0.2s ease-out; }
+.pet.blink .lid { transform: scaleY(0.1); }
+.pet.noticed .pupil-scale { transform: scale(1.18); }
+
+/* ---------- Speech bubble ---------- */
+.bubble {
+  --tail-x: 50%;
+  position: absolute;
+  left: 0;
+  bottom: 94px;
+  box-sizing: border-box;
+  min-width: 70px;
+  max-width: 270px;
+  padding: 10px 14px 11px;
+  border-radius: 16px;
+  background: #fff;
+  color: #2b2118;
+  font-size: 14px;
+  line-height: 1.35;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22), 0 1px 3px rgba(0, 0, 0, 0.16);
+  cursor: pointer;
+  transform-origin: var(--tail-x) 100%;
+}
+.bubble[hidden] { display: none; }
+.bubble::after {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: calc(var(--tail-x) - 7px);
+  width: 14px;
+  height: 14px;
+  background: inherit;
+  border-radius: 3px;
+  transform: rotate(45deg);
+}
+.bubble.hold { visibility: hidden; }
+.bubble.pop { animation: pop 0.3s cubic-bezier(0.2, 1.5, 0.5, 1) both; }
+
+.bubble[data-priority="3"] { background: #fff6ec; box-shadow: 0 0 0 2px #ff8b25, 0 8px 24px rgba(0, 0, 0, 0.22); }
+
+@keyframes pop {
+  from { transform: scale(0.6); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.text { margin: 0; overflow-wrap: anywhere; white-space: pre-line; }
+.bubble.wide { max-width: 430px; font-size: 13px; }
+.sub { margin: 3px 0 0; font-size: 11.5px; color: #8a7867; }
+
+.action {
+  margin-top: 8px;
+  padding: 5px 14px 6px;
+  border: 0;
+  border-radius: 999px;
+  background: #ff8b25;
+  color: #fff;
+  font: 600 13px/1.2 inherit;
+  font-family: inherit;
+  cursor: pointer;
+}
+.action:hover { background: #f07400; }
+
+.dots { display: none; gap: 4px; padding: 3px 2px; }
+.bubble.thinking .dots { display: inline-flex; }
+.bubble.thinking .text { display: none; }
+.dots span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ff8b25;
+  animation: dot 1s ease-in-out infinite;
+}
+.dots span:nth-child(2) { animation-delay: 0.15s; }
+.dots span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes dot {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+  40% { transform: translateY(-4px); opacity: 1; }
+}

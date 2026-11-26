@@ -1,0 +1,53 @@
+name: Mac check
+
+# Runs the real one-line install on a fresh Mac, then the tests, a start-up and pictures of Blip's own windows.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mac:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - name: Install with the one command (private Node.js, no start)
+        env:
+          BLIP_NO_START: '1'
+          BLIP_FORCE_PRIVATE_NODE: '1'
+        run: curl -fsSL "https://raw.githubusercontent.com/${{ github.repository }}/${{ github.sha }}/install-mac.sh" | /bin/bash
+
+      - name: Tests
+        run: cd ~/blip && PATH="$HOME/blip/.node/bin:$PATH" npm test
+
+      - name: Starts, keeps running and finds the news without Claude Code
+        timeout-minutes: 4
+        run: |
+          ~/blip/start-blip.sh
+          sleep 90
+          pgrep -fl "blip/node_modules/electron/dist"
+          LOG="$HOME/Library/Application Support/blip/blip.log"
+          cat "$LOG" || true
+          grep -q "used the lead stories" "$LOG"
+          pkill -f "blip/node_modules/electron/dist"
+
+      - name: Pictures of Blip's own windows (demo)
+        timeout-minutes: 3
+        run: |
+          mkdir -p "$RUNNER_TEMP/shots" "$RUNNER_TEMP/demo-data"
+          cd ~/blip
+          BLIP_DATA_DIR="$RUNNER_TEMP/demo-data" BLIP_CAPTURE_DIR="$RUNNER_TEMP/shots" "./node_modules/electron/dist/Electron.app/Contents/MacOS/Electron" . --demo
+          ls -la "$RUNNER_TEMP/shots"
+          test -s "$RUNNER_TEMP/shots/pet.png"
+          test -s "$RUNNER_TEMP/shots/news-open.png"
+
+      - name: Keep the pictures
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: mac-shots
+          path: ${{ runner.temp }}/shots
+          if-no-files-found: warn

@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'">
+  <title>Blip</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="bubble" class="bubble" role="status" aria-live="polite" hidden>
+    <p id="bubble-text" class="text"></p>
+    <span class="dots" aria-hidden="true"><span></span><span></span><span></span></span>
+    <p id="bubble-sub" class="sub" hidden></p>
+    <button id="bubble-btn" class="action" type="button" hidden></button>
+  </div>
+
+  <div id="pet" class="pet" aria-label="Blip">
+    <div class="shadow"></div>
+    <div id="body-wrap" class="body-wrap">
+      <svg width="84" height="124" viewBox="0 0 84 124" aria-hidden="true">
+        <defs>
+          <linearGradient id="clay" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#ee7c49"/>
+            <stop offset="0.55" stop-color="#d9602e"/>
+            <stop offset="1" stop-color="#b8461c"/>
+          </linearGradient>
+        </defs>
+
+        <!-- The plant: grown by pet.js from the clock -->
+        <g id="plant" class="plant">
+          <path id="stem" d="M42 64 Q44.5 61 42 58" fill="none" stroke="#4f8a1c" stroke-width="3" stroke-linecap="round"/>
+          <g id="leaves-low" transform="translate(42 61) scale(0.001)">
+            <path d="M0 0 Q-9 -11 -21 -6 Q-12 5 0 0 Z" fill="#5f9e24"/>
+            <path d="M0 0 Q9 -11 21 -6 Q12 5 0 0 Z" fill="#86bf47"/>
+          </g>
+          <g id="leaves-high" transform="translate(42 50) scale(0.001)">
+            <path d="M0 0 Q-7 -9 -16 -5 Q-9 4 0 0 Z" fill="#86bf47"/>
+            <path d="M0 0 Q7 -9 16 -5 Q9 4 0 0 Z" fill="#5f9e24"/>
+          </g>
+          <g id="bud" transform="translate(42 20) scale(0.001)">
+            <ellipse cx="0" cy="-4" rx="3.6" ry="5.2" fill="#d4537e"/>
+            <path d="M-3.8 -1 Q0 3.5 3.8 -1 Z" fill="#5f9e24"/>
+          </g>
+          <g id="flower" transform="translate(42 20) scale(0.001)">
+            <g fill="#f4a6c0">
+              <circle cx="0" cy="-5.6" r="4.6"/>
+              <circle cx="5.3" cy="-1.7" r="4.6"/>
+              <circle cx="3.3" cy="4.5" r="4.6"/>
+              <circle cx="-3.3" cy="4.5" r="4.6"/>
+              <circle cx="-5.3" cy="-1.7" r="4.6"/>
+            </g>
+            <circle r="3.4" fill="#fac775"/>
+          </g>
+        </g>
+
+        <!-- The pot: Sprout's face -->
+        <g id="pot">
+          <path d="M19 72 L65 72 L58.5 121 L25.5 121 Z" fill="url(#clay)"/>
+          <rect x="13" y="61" width="58" height="12" rx="4" fill="#c4542a"/>
+          <rect x="13" y="61" width="58" height="4" rx="2" fill="#e5794a"/>
+          <ellipse cx="42" cy="63.6" rx="25" ry="2.6" fill="#5b3a22"/>
+          <path d="M24 78 L28 78 L31 113 L28 113 Z" fill="#fff" opacity="0.18"/>
+          <g transform="translate(33 89)">
+            <g class="lid">
+              <ellipse rx="6.6" ry="8" fill="#fff"/>
+              <g class="pupil"><g class="pupil-scale">
+                <circle r="3.6" fill="#3a1a0c"/>
+                <circle cx="1.2" cy="-1.5" r="1.2" fill="#fff"/>
+              </g></g>
+            </g>
+          </g>
+          <g transform="translate(51 89)">
+            <g class="lid">
+              <ellipse rx="6.6" ry="8" fill="#fff"/>
+              <g class="pupil"><g class="pupil-scale">
+                <circle r="3.6" fill="#3a1a0c"/>
+                <circle cx="1.2" cy="-1.5" r="1.2" fill="#fff"/>
+              </g></g>
+            </g>
+          </g>
+          <ellipse cx="25.5" cy="100" rx="4" ry="2.3" fill="#ff4f4f" opacity="0.35"/>
+          <ellipse cx="58.5" cy="100" rx="4" ry="2.3" fill="#ff4f4f" opacity="0.35"/>
+          <path class="mouth" d="M37.5 102 Q42 106 46.5 102" fill="none" stroke="#5a220c" stroke-width="2" stroke-linecap="round"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <script src="bubble-queue.js"></script>
+  <script src="growth.js"></script>
+  <script src="pet.js"></script>
+</body>
+</html>
