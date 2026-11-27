@@ -10,6 +10,7 @@ contextBridge.exposeInMainWorld('blip', {
   onDemo: (callback) => ipcRenderer.on('demo', () => callback()),
   onDragMode: (callback) => ipcRenderer.on('drag-mode', () => callback()),
   onPlaced: (callback) => ipcRenderer.on('placed', (_event, place) => callback(place)),
+  onLook: (callback) => ipcRenderer.on('look', (_event, id) => callback(String(id))),
   dragStart: (grab) => ipcRenderer.send('drag-start', grab),
   dragMove: () => ipcRenderer.send('drag-move'),
   dragEnd: () => ipcRenderer.send('drag-end'),

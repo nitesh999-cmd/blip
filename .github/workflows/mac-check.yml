@@ -44,6 +44,16 @@ jobs:
           test -s "$RUNNER_TEMP/shots/pet.png"
           test -s "$RUNNER_TEMP/shots/news-open.png"
 
+      - name: Pictures of every look, the supercar driving left to right, the GT facing its way
+        timeout-minutes: 4
+        run: |
+          cd ~/blip
+          BLIP_CAPTURE_DIR="$RUNNER_TEMP/shots" "./node_modules/electron/dist/Electron.app/Contents/MacOS/Electron" test/visual/capture-looks.js | tee "$RUNNER_TEMP/looks.log"
+          grep -q "moves back only 1 time(s) (the wrap)" "$RUNNER_TEMP/looks.log"
+          grep -q ", 0 facing the wrong way" "$RUNNER_TEMP/looks.log"
+          test -s "$RUNNER_TEMP/shots/look-supercar.png"
+          test -s "$RUNNER_TEMP/shots/look-duck.png"
+
       - name: Keep the pictures
         if: always()
         uses: actions/upload-artifact@v7

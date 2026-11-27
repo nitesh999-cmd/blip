@@ -34,13 +34,66 @@ html, body {
   inset: 0;
   transform-origin: 50% 100%;
 }
-.body-wrap svg { display: block; overflow: visible; }
+/* One drawing per look; only the chosen one shows. */
+.body-wrap svg.look { position: absolute; left: 0; bottom: 0; display: none; overflow: visible; }
+.body-wrap svg.look.active { display: block; }
 
-.pet.walking .body-wrap { animation: waddle 0.52s ease-in-out infinite; }
+.pet[data-motion="waddle"].walking .body-wrap { animation: waddle 0.52s ease-in-out infinite; }
+.pet[data-motion="float"] .body-wrap { animation: hover 2.6s ease-in-out infinite; }
+.pet[data-motion="float"] .shadow { transform: scaleX(0.7); opacity: 0.5; }
 .pet.dragging { cursor: grabbing; }
-.pet.dragging .body-wrap { transform: translateY(-3px) rotate(-6deg); transition: transform 0.12s ease-out; }
+.pet.dragging #body-wrap { animation: none; transform: translateY(-3px) rotate(-6deg); transition: transform 0.12s ease-out; }
 .pet.dragging .shadow { opacity: 0.4; }
-.body-wrap.jump { animation: jump 0.72s cubic-bezier(0.3, 0.7, 0.4, 1) both; }
+#body-wrap.jump { animation: jump 0.72s cubic-bezier(0.3, 0.7, 0.4, 1) both; }
+
+@keyframes hover {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+/* Cars: wheels turn and the body purrs while driving; speed lines and exhaust puffs trail behind. */
+.wheel { transform-box: fill-box; transform-origin: center; }
+.pet.walking .wheel { animation: spin var(--spin, 0.6s) linear infinite; }
+.pet[data-look="gt"] { --spin: 0.75s; }
+.pet[data-look="supercar"] { --spin: 0.42s; }
+.pet[data-motion="drive"].walking .car-body { animation: purr 0.2s linear infinite; }
+.speed, .puffs { opacity: 0; transition: opacity 0.3s; }
+.pet.walking .speed { opacity: 0.8; animation: streak 0.5s linear infinite; }
+.pet.walking .puffs { opacity: 0.7; animation: puff 0.7s ease-out infinite; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes purr {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-0.6px); }
+}
+@keyframes streak {
+  from { transform: translateX(4px); }
+  to { transform: translateX(-6px); }
+}
+@keyframes puff {
+  from { transform: translateX(0) scale(0.8); opacity: 0.7; }
+  to { transform: translateX(-8px) scale(1.2); opacity: 0; }
+}
+
+/* Little touches for the other looks. */
+.antenna-light { animation: beacon 1.6s steps(1) infinite; }
+.chest-light { animation: beacon 1.2s steps(1) 0.4s infinite; }
+.ufo-lights circle { animation: twinkle 1.2s ease-in-out infinite; }
+.ufo-lights circle:nth-child(2n) { animation-delay: 0.6s; }
+.beam { animation: twinkle 2.4s ease-in-out infinite; }
+.flame { transform-box: fill-box; transform-origin: 50% 0; animation: flicker 0.18s ease-in-out infinite alternate; }
+.tail { transform-box: fill-box; transform-origin: 100% 100%; animation: swish 2.2s ease-in-out infinite; }
+
+@keyframes beacon { 50% { opacity: 0.25; } }
+@keyframes twinkle { 50% { opacity: 0.45; } }
+@keyframes flicker {
+  from { transform: scaleY(0.82); }
+  to { transform: scaleY(1.08); }
+}
+@keyframes swish {
+  0%, 100% { transform: rotate(-8deg); }
+  50% { transform: rotate(10deg); }
+}
 
 @keyframes waddle {
   0%, 100% { transform: translateY(0) scale(1.03, 0.97); }

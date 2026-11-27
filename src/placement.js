@@ -18,13 +18,20 @@ function stripBoundsFor(display, height = STRIP_HEIGHT) {
   return { x: workArea.x, y: workArea.y + workArea.height - h, width: workArea.width, height: h };
 }
 
+/** The current look's drawing size; the flower pot's if the size given is missing or bad. */
+function petSize(size) {
+  const ok = (v) => Number.isFinite(v) && v > 0;
+  return size && ok(size.w) && ok(size.h) ? { w: size.w, h: size.h } : { w: PET_W, h: PET_H };
+}
+
 /** While dragging, a pet-sized window that keeps the grabbed spot under the cursor. */
-function dragBounds(cursor, grab) {
+function dragBounds(cursor, grab, size) {
+  const { w, h } = petSize(size);
   return {
     x: Math.round(cursor.x - grab.x - DRAG_PAD),
     y: Math.round(cursor.y - grab.y - DRAG_PAD),
-    width: PET_W + 2 * DRAG_PAD,
-    height: PET_H + DRAG_PAD + FLOOR,
+    width: w + 2 * DRAG_PAD,
+    height: h + DRAG_PAD + FLOOR,
   };
 }
 
@@ -44,15 +51,16 @@ function displayPoint(display) {
 }
 
 /** Where the pet lands inside the new strip: under the cursor, kept fully on screen. */
-function dropX(cursor, grab, strip) {
+function dropX(cursor, grab, strip, width = PET_W) {
   const x = cursor.x - grab.x - strip.x;
-  return Math.round(Math.min(Math.max(x, 0), Math.max(0, strip.width - PET_W)));
+  return Math.round(Math.min(Math.max(x, 0), Math.max(0, strip.width - petSize({ w: width, h: 1 }).w)));
 }
 
 /** Grab offsets come from the page; keep them inside the pet so a bad value can't fling the window. */
-function safeGrab(grab) {
+function safeGrab(grab, size) {
+  const { w, h } = petSize(size);
   const clamp = (v, max) => (Number.isFinite(v) ? Math.min(Math.max(v, 0), max) : max / 2);
-  return { x: clamp(grab && grab.x, PET_W), y: clamp(grab && grab.y, PET_H) };
+  return { x: clamp(grab && grab.x, w), y: clamp(grab && grab.y, h) };
 }
 
-module.exports = { stripBoundsFor, dragBounds, pickDisplay, displayPoint, dropX, safeGrab, STRIP_HEIGHT, DRAG_PAD, PET_W, PET_H };
+module.exports = { stripBoundsFor, petSize, dragBounds, pickDisplay, displayPoint, dropX, safeGrab, STRIP_HEIGHT, DRAG_PAD, PET_W, PET_H };

@@ -14,10 +14,10 @@
     <button id="bubble-btn" class="action" type="button" hidden></button>
   </div>
 
-  <div id="pet" class="pet" aria-label="Blip">
+  <div id="pet" class="pet" data-look="sprout" data-motion="waddle" aria-label="Blip">
     <div class="shadow"></div>
     <div id="body-wrap" class="body-wrap">
-      <svg width="84" height="124" viewBox="0 0 84 124" aria-hidden="true">
+      <svg class="look active" data-look="sprout" width="84" height="124" viewBox="0 0 84 124" aria-hidden="true">
         <defs>
           <linearGradient id="clay" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0" stop-color="#ee7c49"/>
@@ -88,6 +88,8 @@
 
   <script src="bubble-queue.js"></script>
   <script src="growth.js"></script>
+  <script src="looks.js"></script>
+  <script src="look-art.js"></script>
   <script src="pet.js"></script>
 </body>
 </html>

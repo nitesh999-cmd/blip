@@ -3,11 +3,12 @@
 (() => {
   const { emptyQueue, pushBubble, finishBubble } = window.BubbleQueue;
   const { growthAt, plantShape } = window.Growth;
+  const { lookById, stepX, isOnScreen, clampX } = window.Looks;
 
-  const PET_W = 84;
   const SVG_H = 124;
   const SOIL_Y = 64;
-  const POT_CENTRE_FROM_BOTTOM = 32;
+  const EYE_HEIGHT_SHARE = 0.35;
+  const FLOAT_LIFT = 6;
   const BUBBLE_GAP = 10;
   const GROWTH_EVERY_MS = 30_000;
   const DEMO_GROWTH_EVERY_MS = 100;
@@ -25,7 +26,7 @@
 
   const pet = document.getElementById('pet');
   const bodyWrap = document.getElementById('body-wrap');
-  const pupils = [...document.querySelectorAll('.pupil')];
+  const shadow = pet.querySelector('.shadow');
   const pot = document.getElementById('pot');
   const plant = document.getElementById('plant');
   const stem = document.getElementById('stem');
@@ -41,7 +42,11 @@
   const rand = (min, max) => min + Math.random() * (max - min);
   const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
-  let x = rand(EDGE, Math.max(EDGE, innerWidth - PET_W - EDGE));
+  let look = lookById('sprout');
+  let lookSvg = bodyWrap.querySelector('svg.look.active');
+  let pupils = [...lookSvg.querySelectorAll('.pupil')];
+  let facing = 1;
+  let x = rand(EDGE, Math.max(EDGE, innerWidth - look.w - EDGE));
   let dir = Math.random() < 0.5 ? -1 : 1;
   let mode = 'walk';
   let modeUntil = performance.now() + rand(3000, 7000);
@@ -89,6 +94,52 @@
     const demoStart = performance.now();
     growthSource = () => ((performance.now() - demoStart) % DEMO_LOOP_MS) / DEMO_DAY_MS;
     startGrowing(DEMO_GROWTH_EVERY_MS);
+  }
+
+  // ---------- looks: the pot, the cars and the rest ----------
+  // Drawings are fixed strings from look-art.js, parsed as SVG (never as HTML).
+  function mountArt() {
+    const art = window.LookArt || {};
+    Object.keys(art).forEach((id) => {
+      const doc = new DOMParser().parseFromString(art[id], 'image/svg+xml');
+      const root = doc.documentElement;
+      if (root.nodeName !== 'svg' || root.getAttribute('data-look') !== id) return;
+      bodyWrap.appendChild(document.importNode(root, true));
+    });
+  }
+
+  function setFacing(next) {
+    if (next === facing) return;
+    facing = next;
+    lookSvg.style.transform = facing < 0 ? 'scaleX(-1)' : '';
+  }
+
+  function setLook(id) {
+    const next = lookById(id);
+    const svg = bodyWrap.querySelector(`svg.look[data-look="${next.id}"]`);
+    if (!svg) return;
+    setFacing(1);
+    lookSvg.classList.remove('active');
+    svg.classList.add('active');
+    look = next;
+    lookSvg = svg;
+    pupils = [...svg.querySelectorAll('.pupil')];
+    pet.dataset.look = next.id;
+    pet.dataset.motion = next.motion;
+    pet.style.width = `${next.w}px`;
+    pet.style.height = `${next.h}px`;
+    shadow.style.width = `${Math.round(next.w * next.shadow)}px`;
+    shadow.style.left = `${Math.round((next.w * (1 - next.shadow)) / 2)}px`;
+    if (next.oneWay) dir = 1;
+    x = clampX(x, next.w, innerWidth, EDGE);
+    lastHitKey = '';
+    jump();
+  }
+
+  /** Height from the floor to the top of the drawing, for placing the bubble. */
+  function figureHeight() {
+    if (look.id === 'sprout') return SVG_H - plantTop;
+    return look.h - look.top + (look.motion === 'float' ? FLOAT_LIFT : 0);
   }
 
   // ---------- speech bubbles ----------
@@ -235,20 +286,17 @@
       modeUntil = now + rand(1500, 4500);
       idleLook = { x: rand(-0.6, 0.6), y: rand(-0.4, 0.3) };
     } else {
+      const driving = look.motion === 'drive';
       mode = 'walk';
-      modeUntil = now + rand(3000, 8000);
-      if (Math.random() < 0.4) dir = -dir;
+      modeUntil = now + (driving ? rand(5000, 12_000) : rand(3000, 8000));
+      if (!look.oneWay && Math.random() < 0.4) dir = -dir;
     }
   }
 
   function walk(dt) {
-    const minX = EDGE;
-    const maxX = Math.max(EDGE, innerWidth - PET_W - EDGE);
-    x += dir * WALK_SPEED * dt;
-    if (x <= minX || x >= maxX) {
-      x = clamp(x, minX, maxX);
-      dir = -dir;
-    }
+    const step = stepX({ x, dir, dx: WALK_SPEED * look.speed * dt, w: look.w, viewW: innerWidth, edge: EDGE, oneWay: look.oneWay });
+    x = step.x;
+    dir = step.dir;
   }
 
   function lookDirection(dx, dy, dist, walking) {
@@ -260,15 +308,17 @@
   function placeBubble() {
     if (bubble.hidden) return;
     const width = bubble.offsetWidth;
-    const centre = x + PET_W / 2;
+    const centre = clamp(x + look.w / 2, 0, innerWidth);
     const left = clamp(centre - width / 2, 8, Math.max(8, innerWidth - width - 8));
     bubble.style.left = `${left}px`;
-    bubble.style.bottom = `${Math.round(FLOOR + (SVG_H - plantTop) + BUBBLE_GAP)}px`;
+    bubble.style.bottom = `${Math.round(FLOOR + figureHeight() + BUBBLE_GAP)}px`;
     bubble.style.setProperty('--tail-x', `${clamp(centre - left, 18, width - 18)}px`);
   }
 
   function reportHitRects() {
-    const rects = [pot.getBoundingClientRect(), plant.getBoundingClientRect()];
+    // The body goes first (main places the brief card above it); at most three parts per look.
+    const parts = look.id === 'sprout' ? [pot, plant] : [...lookSvg.querySelectorAll('.hit')].slice(0, 3);
+    const rects = parts.map((part) => part.getBoundingClientRect());
     if (!bubble.hidden) rects.push(bubble.getBoundingClientRect());
     const plain = rects.map((r) => ({ x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height) }));
     const key = plain.map((r) => [r.x, r.y, r.w, r.h].map((n) => n >> 2).join(',')).join('|');
@@ -281,24 +331,30 @@
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
 
-    const centreX = x + PET_W / 2;
-    const centreY = innerHeight - FLOOR - POT_CENTRE_FROM_BOTTOM;
+    const centreX = x + look.w / 2;
+    const centreY = innerHeight - FLOOR - look.h * EYE_HEIGHT_SHARE;
     const dx = cursor.x - centreX;
     const dy = cursor.y - centreY;
     const dist = Math.hypot(dx, dy);
     noticed = dist < NOTICE_RADIUS;
 
-    const holding = dragging || noticed || jumping || Boolean(queue.current);
+    // A one-way car that is part-way off the screen finishes coming back on before it stops.
+    const wrapping = look.oneWay && !dragging && !isOnScreen(x, look.w, innerWidth);
+    const holding = !wrapping && (dragging || noticed || jumping || Boolean(queue.current));
     if (!holding && now > modeUntil) chooseNextMode(now);
-    const walking = !holding && mode === 'walk';
+    const walking = wrapping || (!holding && mode === 'walk');
     if (walking) walk(dt);
+    if (walking && look.faces) setFacing(dir);
 
     pet.classList.toggle('walking', walking);
     pet.classList.toggle('noticed', noticed);
     pet.style.transform = `translateX(${x}px)`;
 
-    const look = lookDirection(dx, dy, dist, walking);
-    const transform = `translate(${(look.x * 3.1).toFixed(2)} ${(look.y * 3.8).toFixed(2)})`;
+    const gaze = lookDirection(dx, dy, dist, walking);
+    // A flipped drawing mirrors its pupils too, so mirror the gaze back.
+    const gx = gaze.x * 3.1 * look.travel * facing;
+    const gy = gaze.y * 3.8 * look.travel;
+    const transform = `translate(${gx.toFixed(2)} ${gy.toFixed(2)})`;
     pupils.forEach((pupil) => pupil.setAttribute('transform', transform));
 
     placeBubble();
@@ -310,7 +366,9 @@
   window.blip.onBubble(enqueue);
   window.blip.onJump(jump);
   window.blip.onDemo(startDemoGrowth);
+  window.blip.onLook(setLook);
 
+  mountArt();
   startGrowing(GROWTH_EVERY_MS);
   blinkLater();
   requestAnimationFrame(frame);

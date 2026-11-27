@@ -48,3 +48,20 @@ test('grab offsets from the page are kept inside the pet', () => {
   assert.deepEqual(p.safeGrab({ x: -500, y: 99999 }), { x: 0, y: p.PET_H });
   assert.deepEqual(p.safeGrab({ x: 'a' }), { x: p.PET_W / 2, y: p.PET_H / 2 });
 });
+
+test('a wider look (the cars) gets a drag window, drop limit and grab area of its own size', () => {
+  const car = { w: 126, h: 56 };
+  const bounds = p.dragBounds({ x: 2500, y: 700 }, { x: 100, y: 30 }, car);
+  assert.equal(bounds.width, 126 + 2 * p.DRAG_PAD);
+  assert.equal(bounds.height, 56 + p.DRAG_PAD + 4);
+  assert.equal(bounds.x + p.DRAG_PAD + 100, 2500);
+  const strip = p.stripBoundsFor(right);
+  assert.equal(p.dropX({ x: 3839, y: 900 }, { x: 0, y: 30 }, strip, car.w), 1920 - 126);
+  assert.deepEqual(p.safeGrab({ x: 120, y: 99 }, car), { x: 120, y: 56 });
+  assert.deepEqual(p.safeGrab({ x: 'a' }, car), { x: 63, y: 28 });
+});
+
+test('a missing or bad size falls back to the flower pot size', () => {
+  assert.equal(p.dragBounds({ x: 0, y: 0 }, { x: 0, y: 0 }, { w: 'wide', h: -3 }).width, p.PET_W + 2 * p.DRAG_PAD);
+  assert.deepEqual(p.safeGrab({ x: 999, y: 999 }, null), { x: p.PET_W, y: p.PET_H });
+});

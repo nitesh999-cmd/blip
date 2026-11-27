@@ -5,6 +5,7 @@ const path = require('node:path');
 const { app, ipcMain, Menu } = require('electron');
 const { createPetWindow } = require('./src/pet-window');
 const { createSettings } = require('./src/settings');
+const looks = require('./renderer/looks');
 const { createLinePool, makeClaudeGenerator, runClaude, SYSTEM_PROMPT } = require('./src/claude-lines');
 const { createNewsController } = require('./src/news-controller');
 const { NEWS_SYSTEM_PROMPT, leadStories } = require('./src/news');
@@ -23,6 +24,7 @@ const CAPTURE_QUIT_MS = 16_000;
 const PET_CAPTURE_MS = 3_000;
 
 let pet;
+let settings;
 let newsDot;
 let pool;
 let sequence = 0;
@@ -82,11 +84,22 @@ function onClaudeError(error) {
   showBubble({ text, priority: PRIORITY.notice, durationMs: NOTICE_BUBBLE_MS });
 }
 
+/** Turn Blip into another look, remember it, and say hello in character. */
+function setLook(id, { greet = true } = {}) {
+  const look = looks.lookById(id);
+  settings.update({ look: look.id });
+  pet.setSize(look);
+  pet.send('look', look.id);
+  if (greet) showBubble({ text: look.greeting, priority: PRIORITY.chatter, durationMs: 4500 });
+}
+
 function openMenu() {
+  const current = settings.get().look;
   const menu = Menu.buildFromTemplate([
     { label: 'Encourage me', click: () => say('encourage') },
     { label: 'Say something funny', click: () => say('funny') },
     { label: 'Check in on me', click: () => say('checkin') },
+    { label: 'Change my look', submenu: looks.menuTemplate(current, setLook, () => setLook(looks.surpriseLook(current))) },
     { type: 'separator' },
     ...newsDot.menuItems(),
     { type: 'separator' },
@@ -113,7 +126,8 @@ function runDemo() {
 }
 
 function wireIpc() {
-  ipcMain.on('tap', (event) => { if (pet.isFromPet(event)) say('encourage'); });
+  // A click changes the look; "Encourage me" is in the right-click menu.
+  ipcMain.on('tap', (event) => { if (pet.isFromPet(event)) setLook(looks.nextLook(settings.get().look)); });
   ipcMain.on('open-menu', (event) => { if (pet.isFromPet(event)) openMenu(); });
   ipcMain.on('hit-rects', (event, rects) => { if (pet.isFromPet(event)) pet.setHitRects(rects); });
   ipcMain.on('drag-start', (event, grab) => { if (pet.isFromPet(event)) pet.startDrag(grab); });
@@ -139,7 +153,7 @@ function start() {
   fs.writeFileSync(promptFile, SYSTEM_PROMPT);
   fs.writeFileSync(newsPromptFile, NEWS_SYSTEM_PROMPT);
 
-  const settings = createSettings(dataDir, log);
+  settings = createSettings(dataDir, log);
   pool = createLinePool({ generate: makeClaudeGenerator({ systemPromptFile: promptFile, cwd: claudeDir }), onError: onClaudeError });
   pet = createPetWindow({
     savedPoint: settings.get().displayPoint,
@@ -156,8 +170,9 @@ function start() {
     fallbackPick: leadStories,
   });
   wireIpc();
+  setLook(settings.get().look, { greet: false });
 
-  showBubble({ text: "Hi, I'm Blip! Tap me any time.", priority: PRIORITY.chatter, durationMs: 5000 });
+  showBubble({ text: "Hi, I'm Blip! Tap me to change my look.", priority: PRIORITY.chatter, durationMs: 5000 });
   if (DEMO) {
     runDemo();
     return;

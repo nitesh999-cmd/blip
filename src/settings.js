@@ -3,8 +3,9 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { sanitizePrefs, DEFAULT_PREFS } = require('./news');
+const { sanitizeLook, DEFAULT_LOOK } = require('../renderer/looks');
 
-const DEFAULTS = Object.freeze({ displayPoint: null, news: DEFAULT_PREFS });
+const DEFAULTS = Object.freeze({ displayPoint: null, news: DEFAULT_PREFS, look: DEFAULT_LOOK });
 
 /** Tiny JSON settings file in Blip's own app-data folder. */
 function createSettings(dir, log = () => {}) {
@@ -14,7 +15,7 @@ function createSettings(dir, log = () => {}) {
     const saved = JSON.parse(fs.readFileSync(file, 'utf8'));
     const point = saved.displayPoint;
     const validPoint = point && Number.isFinite(point.x) && Number.isFinite(point.y) ? { x: point.x, y: point.y } : null;
-    current = { ...DEFAULTS, displayPoint: validPoint, news: sanitizePrefs(saved.news) };
+    current = { ...DEFAULTS, displayPoint: validPoint, news: sanitizePrefs(saved.news), look: sanitizeLook(saved.look) };
   } catch (error) {
     if (error.code !== 'ENOENT') log(`settings unreadable, using defaults: ${error.message}`);
   }

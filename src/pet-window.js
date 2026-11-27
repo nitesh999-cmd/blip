@@ -57,6 +57,7 @@ function createPetWindow({ savedPoint = null, onMoved = () => {} } = {}) {
   let loaded = false;
   let outbox = [];
   let drag = null;
+  let size = placement.petSize(null);
 
   win.setAlwaysOnTop(true, 'screen-saver');
   if (process.platform === 'darwin') win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
@@ -89,7 +90,7 @@ function createPetWindow({ savedPoint = null, onMoved = () => {} } = {}) {
   ));
 
   const followCursor = () => {
-    if (drag && !win.isDestroyed()) win.setBounds(placement.dragBounds(screen.getCursorScreenPoint(), drag.grab));
+    if (drag && !win.isDestroyed()) win.setBounds(placement.dragBounds(screen.getCursorScreenPoint(), drag.grab, size));
   };
 
   // Follow the mouse everywhere on screen (not just over the window) so Blip can look at it.
@@ -128,7 +129,7 @@ function createPetWindow({ savedPoint = null, onMoved = () => {} } = {}) {
   /** Pressed and moved: shrink to just Blip and keep the grabbed spot under the cursor. */
   function startDrag(grab) {
     if (drag) return;
-    drag = { grab: placement.safeGrab(grab) };
+    drag = { grab: placement.safeGrab(grab, size) };
     setInteractive(true);
     followCursor();
     send('drag-mode');
@@ -140,7 +141,7 @@ function createPetWindow({ savedPoint = null, onMoved = () => {} } = {}) {
     const cursor = screen.getCursorScreenPoint();
     display = screen.getDisplayNearestPoint(cursor);
     const strip = placement.stripBoundsFor(display);
-    const x = placement.dropX(cursor, drag.grab, strip);
+    const x = placement.dropX(cursor, drag.grab, strip, size.w);
     drag = null;
     hitRects = [];
     win.setBounds(strip);
@@ -156,6 +157,8 @@ function createPetWindow({ savedPoint = null, onMoved = () => {} } = {}) {
     dragMove: followCursor,
     endDrag,
     setHitRects(rects) { if (!drag) hitRects = validRects(rects); },
+    /** The current look's size (from the catalogue, not the page), for dragging and dropping. */
+    setSize(next) { if (!drag) size = placement.petSize(next); },
     /** Screen point under Blip's middle, for placing windows near it on the same screen. */
     anchor() {
       const bounds = win.getBounds();

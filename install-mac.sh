@@ -125,7 +125,7 @@ main() {
     say "Blip is installed."
   fi
   printf '%s\n' \
-    "  Tap the plant for a line; right-click it (two-finger click) for the menu." \
+    "  Tap Blip to change its look; right-click it (two-finger click) for the menu." \
     "  The tiny dot near the top right is the news dot: it shines while it checks the news." \
     "" \
     "  To start Blip again later, paste this into Terminal:" \
