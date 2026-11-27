@@ -84,12 +84,14 @@ async function run() {
   // The GT: drive both ways and check it faces where it goes.
   setLook('gt');
   await wait(900);
-  pet.send('placed', { x: Math.round(viewW / 2) });
+  pet.send('placed', { x: viewW - 200 }); // near the right edge, so it has to turn and drive left
   const gt = await track(pet, 16_000, 250);
   let checked = 0;
   let wrong = 0;
+  // Skip the frame where it reaches an edge: it turns round there, so it already faces back.
+  const atEdge = (s) => s.x <= 10 || s.x >= s.viewW - s.w - 10;
   gt.forEach((s, i) => {
-    if (i === 0 || !s.walking || !gt[i - 1].walking || s.x === gt[i - 1].x) return;
+    if (i === 0 || !s.walking || !gt[i - 1].walking || s.x === gt[i - 1].x || atEdge(s)) return;
     checked += 1;
     const left = s.x < gt[i - 1].x;
     if (left !== (s.flip === 'scaleX(-1)')) wrong += 1;

@@ -50,7 +50,7 @@ jobs:
           cd ~/blip
           BLIP_CAPTURE_DIR="$RUNNER_TEMP/shots" "./node_modules/electron/dist/Electron.app/Contents/MacOS/Electron" test/visual/capture-looks.js | tee "$RUNNER_TEMP/looks.log"
           grep -q "moves back only 1 time(s) (the wrap)" "$RUNNER_TEMP/looks.log"
-          grep -q ", 0 facing the wrong way" "$RUNNER_TEMP/looks.log"
+          grep -q ", 0 facing the wrong way; went left: true" "$RUNNER_TEMP/looks.log"
           test -s "$RUNNER_TEMP/shots/look-supercar.png"
           test -s "$RUNNER_TEMP/shots/look-duck.png"
 
